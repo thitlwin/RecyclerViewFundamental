@@ -17,9 +17,11 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -38,6 +40,7 @@ import com.google.android.material.snackbar.Snackbar
  * The Clear button will clear all data from the database.
  */
 class SleepTrackerFragment : Fragment() {
+    val TAG = javaClass.simpleName
 
     /**
      * Called when the Fragment is ready to display content to the screen.
@@ -70,7 +73,9 @@ class SleepTrackerFragment : Fragment() {
                 this, viewModelFactory
             ).get(SleepTrackerViewModel::class.java)
 
-        val adapter = SleepNightAdapter()
+        val adapter = SleepNightAdapter(SleepNightListener {
+            sleepTrackerViewModel.onSleepNightClicked(it)
+        })
         binding.sleepList.adapter = adapter
 
         sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
@@ -122,7 +127,18 @@ class SleepTrackerFragment : Fragment() {
             }
         })
 
-        val manager = GridLayoutManager(activity, 3 , GridLayoutManager.VERTICAL, false)
+        sleepTrackerViewModel.navigateToSleepDetail.observe(viewLifecycleOwner, Observer { night ->
+            night?.let {
+                this.findNavController().navigate(
+                    SleepTrackerFragmentDirections.actionSleepTrackerFragmentToSleepDetailFragment(
+                        night
+                    )
+                )
+                sleepTrackerViewModel.onSleepDetailNavigated()
+            }
+        })
+
+        val manager = GridLayoutManager(activity, 3, GridLayoutManager.VERTICAL, false)
         binding.sleepList.layoutManager = manager
         return binding.root
     }
